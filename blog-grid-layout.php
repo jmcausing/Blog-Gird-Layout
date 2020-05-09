@@ -24,9 +24,9 @@ function meta_box_blog_grid_layout( $post ) {
 	);
 }
 
-add_action('add_meta_boxes_blog_grid_layouts', 'meta_box_blog_grid_layout')gi;
+add_action('add_meta_boxes_blog_grid_layouts', 'meta_box_blog_grid_layout');
 
-// START -- HTML meta box functionl
+// START -- HTML meta box function
 // #################################
 function blog_grid_layout_page_function() {
 
