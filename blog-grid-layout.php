@@ -47,6 +47,19 @@ function blog_grid_layout_page_function() {
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 
+<style>
+	.blog_grid_container { 
+		border: 1px solid red;
+		width: 400px;
+		height: 250px;
+	}
+
+	.blog_grid_container {
+    background-size: cover;
+	}
+</style>
+
+
 <h1>Blog Grid Layout Preview</h1>
 
 <!-- Bootstrap grid start -->
@@ -59,24 +72,27 @@ function blog_grid_layout_page_function() {
 
 	// start loop
 	foreach ( $post_list as $post ) {
+
 	   $posts[] += $post->ID;
 
-	  $post_title =  $post->post_title. '<br>';
+	 	 $post_title =  $post->post_title. '<br>';
 
-	 $featured_image =  get_the_post_thumbnail_url( $post->ID );
+		 $featured_image =  get_the_post_thumbnail_url( $post->ID );
 
-	 if ( !$featured_image)  {
-		 $featured_image = '';
-	 }
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
 
 	?>
 
 
-  <div class="col-sm-4">
-      <h4> <?php echo $post_title; ?>  </h4>
+  <div class="col-sm-6">
 
+	 <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
+	 
+	 </div>
 
-	  <img src="<?php echo $featured_image; ?>" alt="" width="352px" height="220px">
+	  
     </div>
 
 
