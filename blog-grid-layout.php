@@ -48,8 +48,6 @@ function blog_grid_layout_page_function() {
 	 
 	$posts = array();
 
-//	var_dump($post_list);
-
 ?>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
@@ -83,44 +81,75 @@ function blog_grid_layout_page_function() {
   	<div class="row">
     	<div class="col-sm-4">
 
-			<select name="blg_column[]" id="blog_post_grid_cat" multiple>
+			<select name="blg_column[]" id="blog_post_grid_cat" >
 
 				<?php
-				// number of columns for selection
-				$column_numbers = array(1, 2, 3, 4);
-				foreach ($column_numbers as $value_col) {
-					// check if item in selected value is in the array (or selected) for column in post_meta then mark as 'selected'
-					$selected_col = ( in_array($value_col, $blg_column) ) ? 'selected' : '';
-					echo '<option ' . $selected_col . ' value="' . $value_col . '">'. $value_col .'</option>';
-				}
-				?>
 
+				// check if field is empty then add default values
+				if($blg_column == null) { 
+					echo '
+						<option selected value="1"> 1 </option>
+						<option selected value="2"> 2 </option>
+						<option selected value="3"> 3 </option>
+						<option selected value="4"> 4 </option>
+					';
+				}
+
+				// if not empty, get from DB post meta and mark selected items
+				else {
+
+					// number of columns for selection
+					$column_numbers = array(1, 2, 3, 4);
+					foreach ($column_numbers as $value_col) {
+
+						// check if item in selected value is in the array (or selected) for column in post_meta then mark as 'selected'
+						$selected_col = ( in_array($value_col, $blg_column) ) ? 'selected' : '';
+	
+						echo '<option ' . $selected_col . ' value="' . $value_col . '">'. $value_col .'</option>';
+	
+					}
+				}
+
+				?>
+				
 			</select>	
 	
 		</div>
 		<div class="col-sm-4">
-			<input type="number" name="blg_post_number"  class="" value="<?php echo $blg_post_number ?>" />
+			<input type="number" name="blg_post_number"  class="" value="<?php if ($blg_post_number == null) echo "10"; else echo $blg_post_number ?>" />
 		</div>
 		<div class="col-sm-4"> 
 			<select name="blg_category[]" id="blog_post_grid_cat" multiple>
-			
-				<?php 
-	
-				$categories = get_categories(); // get all categories as object
-		
-				// Start loop - get all categories
-				foreach($categories as $category) {
-					// check if items in selected values iares in array (or selected) for category list then mark as 'selected'
-					$selected = ( in_array($category->name, $blg_category) ) ? 'selected' : '';
-				
-					echo '<option '.  $selected  .' value="' . $category->name . '">' . $category->name . '</option>';
+
+				<?php
+
+				// check if field is empty then add default values
+				if($blg_category == null) { 
+					echo '<option selected value="all">All</option>';
+
+					$categories = get_categories(); // get all categories as object
+					foreach($categories as $category) {			
+						echo '<option  value="' . $category->name . '">' . $category->name . '</option>';
+					}
 				}
-				// End loop - get all categories
-				
+
+				// if not empty, get from DB post meta and mark selected items
+				else {
+
+					$categories = get_categories(); // get all categories as object
+		
+					// Start loop - get all categories
+					foreach($categories as $category) {
+						// check if items in selected values iares in array (or selected) for category list then mark as 'selected'
+						$selected = ( in_array($category->name, $blg_category) ) ? 'selected' : '';
+					
+						echo '<option '.  $selected  .' value="' . $category->name . '">' . $category->name . '</option>';
+					}
+					// End loop - get all categories
+
+				}
+
 				?>
-
-				<option value="all">All</option>
-
 
 			</select>
 		</div>	
@@ -249,16 +278,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 // END -- save data from custom post type 'causing_forms'
 // ###############################
-
-
-
-
-
-
-
-
-
-
 
 
 
