@@ -321,6 +321,7 @@ function cptui_register_my_cpts_blog_grid_layouts() {
 		"hierarchical" => false,
 		"rewrite" => [ "slug" => "blog_grid_layouts", "with_front" => true ],
 		"query_var" => true,
+		"menu_icon" => "dashicons-grid-view",
 		"supports" => false,
 	];
 
