@@ -136,6 +136,8 @@ function blog_grid_layout_page_function() {
 				// if not empty, get from DB post meta and mark selected items
 				else {
 
+					echo '<option value="all">All</option>';
+
 					$categories = get_categories(); // get all categories as object
 		
 					// Start loop - get all categories
