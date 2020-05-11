@@ -54,6 +54,31 @@ function blog_grid_layout_page_function() {
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
+
+<script type="text/javascript">
+var field_id =  "post_number_display";    // <----------------- CHANGE THIS
+
+var SubmitButton = document.getElementById("save-post") || false;
+var PublishButton = document.getElementById("publish")  || false; 
+if (SubmitButton)   {SubmitButton.addEventListener("click", SubmCLICKED, false);}
+if (PublishButton)  {PublishButton.addEventListener("click", SubmCLICKED, false);}
+function SubmCLICKED(e){   
+  var passed= false;
+  if(!document.getElementById(field_id)) { alert("I cant find that field ID !!"); }
+  else {
+      var Enabled_Disabled= document.getElementById(field_id).value;
+      if (Enabled_Disabled == "" ) { 
+		  
+		 // alert("Field is Empty");  
+		 jQuery('.post_number_display').append('<br><p style="color: red;">This field is required!')
+		  
+		  
+		   }  else{passed=true;}
+  }
+  if (!passed) { e.preventDefault();  return false;  }
+}
+</script>
+
 <style>
 	.blog_grid_container { 
 		border: 1px solid red;
@@ -115,8 +140,8 @@ function blog_grid_layout_page_function() {
 			</select>	
 	
 		</div>
-		<div class="col-sm-4">
-			<input type="number" name="blg_post_number"  class="" value="<?php if ($blg_post_number == null) echo "10"; else echo $blg_post_number ?>" />
+		<div class="post_number_display col-sm-4">
+			<input id="post_number_display" type="number" name="blg_post_number"  class="" value="<?php if ($blg_post_number == null) echo "10"; else echo $blg_post_number ?>" />
 		</div>
 		<div class="col-sm-4"> 
 			<select name="blg_category[]" id="blog_post_grid_cat" multiple>
