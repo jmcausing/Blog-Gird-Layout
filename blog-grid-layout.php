@@ -9,7 +9,7 @@ Author URI:  http://causingdesignscom.kinsta.cloud/
 */
 
 
-// START - Metaboxes / fields / html for custom post type called 'causing_forms'
+// START - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 // ############################################################################
 function meta_box_blog_grid_layout( $post ) {
 
@@ -36,6 +36,7 @@ function blog_grid_layout_page_function() {
 	wp_nonce_field( basename( __FILE__), 'blog_layout_grid_nonce'); // insert hidden field to verify later when sumitting the post
 
 	// storing variables from the form name and html fields
+	$blg_name = (!empty( get_post_meta($post_id, 'blg_name', true))) ? get_post_meta($post_id, 'blg_name', true) : '';
 	$blg_column = (!empty( get_post_meta($post_id, 'blg_column', true))) ? get_post_meta($post_id, 'blg_column', true) : '';
 	$blg_post_number = (!empty( get_post_meta($post_id, 'blg_post_number', true))) ? get_post_meta($post_id, 'blg_post_number', true) : '';
 	$blg_category = (!empty( get_post_meta($post_id, 'blg_category', true))) ? get_post_meta($post_id, 'blg_category', true) : '';
@@ -56,26 +57,62 @@ function blog_grid_layout_page_function() {
 
 
 <script type="text/javascript">
+
+
 var field_id =  "post_number_display";    // <----------------- CHANGE THIS
+var blg_name =  "blg_name";
 
 var SubmitButton = document.getElementById("save-post") || false;
 var PublishButton = document.getElementById("publish")  || false; 
 if (SubmitButton)   {SubmitButton.addEventListener("click", SubmCLICKED, false);}
 if (PublishButton)  {PublishButton.addEventListener("click", SubmCLICKED, false);}
+
+
 function SubmCLICKED(e){   
+
+	
+
+
   var passed= false;
-  if(!document.getElementById(field_id)) { alert("I cant find that field ID !!"); }
+  
+  if(  !document.getElementById(field_id) || !document.getElementById(blg_name)  ) { alert("I cant find that field ID !!"); }
+
+
   else {
-      var Enabled_Disabled= document.getElementById(field_id).value;
-      if (Enabled_Disabled == "" ) { 
+
+	  var Enabled_Disabled_Name = document.getElementById(blg_name).value;
+	  var Enabled_Disabled = document.getElementById(field_id).value;
+
+      if (Enabled_Disabled_Name == "" || Enabled_Disabled == "" ) { 
 		  
-		 // alert("Field is Empty");  
-		 jQuery('.post_number_display').append('<br><p style="color: red;">This field is required!')
+		if (Enabled_Disabled_Name == "" ) { 
+			
+			jQuery('span.name_required').text('');
+			jQuery('span.name_required').append('Name is required!');
+		}
+		if (Enabled_Disabled == "" ) { 
+			jQuery('span.post_number_display').text('');
+			jQuery('span.post_number_display').append('<br><p style="color: red;">This field is required!');
+			
+		}
+	
 		  
-		  
-		   }  else{passed=true;}
+		} 
+		
+		else{passed=true;}
+
+
+
+
+
+		
   }
   if (!passed) { e.preventDefault();  return false;  }
+
+
+
+
+
 }
 </script>
 
@@ -95,6 +132,16 @@ function SubmCLICKED(e){
 
 
 <div class="container">
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="blg_input_label_name">
+				Blog Grid Layout Name: 
+				<input id="blg_name" type="name" name="blg_name"  class="" value="<?php if ($blg_name == null) echo "Grid Name " . $post_id; else echo $blg_name ?>" />
+				<span style="color: red;" class="name_required"></span>
+			</div>
+			
+		</div>
+	</div>
   	<div class="row">
    		<div class="col-sm-4">
 		Number of columns
@@ -142,6 +189,7 @@ function SubmCLICKED(e){
 		</div>
 		<div class="post_number_display col-sm-4">
 			<input id="post_number_display" type="number" name="blg_post_number"  class="" value="<?php if ($blg_post_number == null) echo "10"; else echo $blg_post_number ?>" />
+			<span style="color: red;" class="post_number_display"></span>
 		</div>
 		<div class="col-sm-4"> 
 			<select name="blg_category[]" id="blog_post_grid_cat" multiple>
@@ -264,7 +312,7 @@ if ( isset($blg_column) )  {
 
 
 // ############################################################################
-// END - Metaboxes / fields / html for custom post type called 'causing_forms'
+// END - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 
 
 
@@ -288,13 +336,14 @@ function save_blog_grid_layouts_meta( $post_id, $post ) {
 	}
 
 	// Get the posted data and sanitize it
+	$blg_name = ( isset($_POST['blg_name']) ) ? $_POST['blg_name'] : '';
  	$blg_column = ( isset($_POST['blg_column']) ) ? $_POST['blg_column'] : '';
 	$blg_post_number = ( isset($_POST['blg_post_number']) ) ? sanitize_text_field( $_POST['blg_post_number']) : '';
 	$blg_category = ( isset($_POST['blg_category']) ) ?  $_POST['blg_category'] : '';
 
 
 	// update / insert post meta
-
+	update_post_meta($post_id, 'blg_name', $blg_name );
 	update_post_meta($post_id, 'blg_column', array_map( 'strip_tags', $blg_column) );
 	update_post_meta($post_id, 'blg_post_number', $blg_post_number);
 	update_post_meta($post_id, 'blg_category', array_map( 'strip_tags', $blg_category) );
@@ -303,8 +352,122 @@ function save_blog_grid_layouts_meta( $post_id, $post ) {
 add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2); 
 
 
-// END -- save data from custom post type 'causing_forms'
+// END -- save data from custom post type 'blog_grid_layouts'
 // ###############################
+
+
+
+
+
+
+
+
+
+
+// START -  Admin column title and data
+// ####################################
+//
+// hint: register custom admin column headers
+// 'blog_grid_layouts' = custom post type name
+
+
+	// START 
+	// ####
+	// This is to edit the title column data in custom post type 'blog_grid_layouts'
+	// It will only change the column data of HTML Name.
+	add_action('admin_head-edit.php', 'blg_register_custom_admin_titles');
+
+	function blg_register_custom_admin_titles() {
+
+		add_filter(
+			'the_title',
+			'blg_custom_admin_titles',
+			99,
+			2
+		);
+	}
+	function blg_custom_admin_titles( $title, $post_id) {
+
+		global $post_type;
+
+		// check if post type name is correct
+		if ($post_type == 'blog_grid_layouts') {
+			$html_name = get_post_meta( $post_id , 'blg_name', true );
+			$output = $html_name ;
+			return $output;
+		}
+
+	}
+	
+	// This is to edit the title column data in custom post type 'blog_grid_layouts'
+	// It will only change the data of Subscriber Column.
+	// ####
+	// END
+	
+	
+	// this is column title header in the custom post type 'blog_grid_layouts'
+	// manage_edit-blog_grid_layouts_columns <-- 'blog_grid_layouts' is the slug of custom post type
+	add_filter('manage_edit-blog_grid_layouts_columns', 'blg_column_headers');
+	
+	function blg_column_headers( $columns ) {
+		// creating custom column header data
+		// __( ) is for language so WP can detect if you are using a different language like Spanish
+		$columns = array(
+			'cb' => '<input type="checkbox">',
+			'title' => __('Blog Grid Layout Name'),
+			'shortcodes' => __('Shortcodes')
+		);
+	
+		// returning new columns
+		return $columns;
+	}
+	
+	
+	// This is the data column of custom post type 'blog_grid_layouts'
+	// You can put other data here like ID, email, shortcode, etc.
+	// 'blog_grid_layouts' = custom post type name
+	add_filter('manage_blog_grid_layouts_posts_custom_column', 'blg_subscriber_column_data', 1, 2);
+	
+	function blg_subscriber_column_data( $column, $post_id ) {
+	
+		// setup our return text
+		$output1 = '';
+	
+		switch ( $column ) {
+				
+					case 'shortcodes':
+						// get the custom email data
+						
+					$shortcode_string = 'blg the_post_id=' . $post_id . '';
+						$my_shortcode =  '['.  $shortcode_string .']';
+						$output1 .= $my_shortcode;
+	
+					break;				
+				
+		}
+	
+		// print the column data
+		echo $output1;
+	}
+	
+	// ##################################
+	// END -  Admin column title and data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
