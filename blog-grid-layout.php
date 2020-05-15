@@ -9,6 +9,20 @@ Author URI:  http://causingdesignscom.kinsta.cloud/
 */
 
 
+
+/* 
+
+Ajax load more reference
+
+
+https://artisansweb.net/load-wordpress-post-ajax/
+
+https://rudrastyh.com/wordpress/load-more-posts-ajax.html
+
+
+
+ */
+
 // START - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 // ############################################################################
 function meta_box_blog_grid_layout( $post ) {
@@ -42,9 +56,11 @@ function blog_grid_layout_page_function() {
 	$blg_category = (!empty( get_post_meta($post_id, 'blg_category', true))) ? get_post_meta($post_id, 'blg_category', true) : '';
 
 	$post_list = get_posts( array(
-		'numberposts' => 10,
+		'numberposts' => $blg_post_number,
 		'orderby'    => 'menu_order',
-		'sort_order' => 'asc'
+		'sort_order' => 'asc',
+		'max_num_pages' => 1,
+		'paged' => 1,
 	) );
 	 
 	$posts = array();
@@ -69,8 +85,6 @@ if (PublishButton)  {PublishButton.addEventListener("click", SubmCLICKED, false)
 
 
 function SubmCLICKED(e){   
-
-	
 
 
   var passed= false;
@@ -100,17 +114,9 @@ function SubmCLICKED(e){
 		} 
 		
 		else{passed=true;}
-
-
-
-
-
 		
   }
   if (!passed) { e.preventDefault();  return false;  }
-
-
-
 
 
 }
@@ -119,7 +125,7 @@ function SubmCLICKED(e){
 <style>
 	.blog_grid_container { 
 		border: 1px solid red;
-		width: 250px;
+		width: 100%;
 		height: 100px;
 		margin: auto;
 		margin-bottom: 20px;
@@ -128,6 +134,35 @@ function SubmCLICKED(e){
 	.blog_grid_container {
     background-size: cover;
 	}
+
+
+
+.misha_loadmore{
+	background-color: #ddd;
+	border-radius: 2px;
+	display: block;
+	text-align: center;
+	font-size: 14px;
+	font-size: 0.875rem;
+	font-weight: 800;
+	letter-spacing:1px;
+	cursor:pointer;
+	text-transform: uppercase;
+	padding: 10px 0;
+	transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.3s ease-in-out;  
+}
+.misha_loadmore:hover{
+	background-color: #767676;
+	color: #fff;
+}
+
+
+.post_title_grid {
+    background: #ffff0073;
+    padding: 10px;
+}
+
+	
 </style>
 
 
@@ -238,6 +273,8 @@ function SubmCLICKED(e){
 
 <!-- Bootstrap grid start  / Display blog grid preview -->
 <!-- #################### -->
+
+
 <div class="container">
   <div class="row">
 
@@ -263,14 +300,57 @@ if ( isset($blg_column) )  {
 		elseif ($col_num = 2) {
 			$set_column = 6;
 		}
+		elseif ($col_num = 1) {
+			$set_column = 12;
+		}
 		else { $set_column = 12; }
 	}	
 }
+
+
+
+
+		// ##########
+		// START
+		// Link jquery custom.js file and call ajax
+		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
+
+		global $wp_query; 
+			
+		// In most cases it is already included on the page and this line can be removed
+		wp_enqueue_script('jquery');
+
+		// register our main script but do not enqueue it yet
+		wp_register_script( 'my_loadmore', plugin_dir_url(__FILE__).'js/custom.js', array('jquery') );
+
+		// now the most interesting part
+		// we have to pass parameters to myloadmore.js script but we can get the parameters values only in PHP
+		// you can define variables directly in your HTML but I decided that the most proper way is wp_localize_script()
+		wp_localize_script( 'my_loadmore', 'misha_loadmore_params', array(
+			'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
+			'posts' => json_encode( $wp_query->query_vars ), // everything about your loop is here
+			'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+			'max_page' => $wp_query->max_num_pages,
+			'column_layout' => $set_column,
+			'number_of_post' => $blg_post_number
+
+		) );
+
+		wp_enqueue_script( 'my_loadmore' );
+
+
+		// Link jquery custom.js file and call ajax
+		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
+		// END
+		// ##########
+
+
 
 	// start loop
 	foreach ( $post_list as $post ) {
 
 	   $posts[] += $post->ID;
+	   
 
 	 	 $post_title =  $post->post_title. '<br>';
 
@@ -282,12 +362,11 @@ if ( isset($blg_column) )  {
 
 	?>
 
-
 	<!-- Set number of columns. 4 is 3 columns. 3 is 4 columns Bootstrap 12 column grid. -->
 	<div class="col-<?php echo $set_column;  ?>">
 
 		<div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
-		
+		<div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
 		</div>
 	  
 	</div>
@@ -298,14 +377,21 @@ if ( isset($blg_column) )  {
 
 	?>
 
-
   </div>
+
+
+  <div class="misha_loadmore">More posts</div>
+
+
+
 </div>
 <!-- #################### -->
 <!-- Bootstrap grid END -->
 
 
 <?php
+
+
 }
 // ###############################
 // END -- HTML meta box function
@@ -354,10 +440,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 // END -- save data from custom post type 'blog_grid_layouts'
 // ###############################
-
-
-
-
 
 
 
@@ -458,10 +540,68 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 
 
+// Using Ajax to pass parameters and create load more for blog grid layout
+// ### START
+// #####################
+
+function misha_loadmore_ajax_handler() {
+
+	// Retrieve data from ajax
+	$col_layout = $_POST['col_layout'];
 
 
+	$current_page = 1;
 
+	$current_page++;
 
+	global $post;
+
+	$post_id = $post->ID;
+
+	$post_list = get_posts( array(
+		'numberposts' => 3,
+		'orderby'    => 'menu_order',
+		'sort_order' => 'asc',
+		'paged' => $current_page,
+		
+	) );
+	 
+	$posts = array();
+	foreach ( $post_list as $post ) {
+
+		$posts[] += $post->ID;
+		
+		$post_title =  $post->post_title. '<br>';
+
+		$featured_image =  get_the_post_thumbnail_url( $post->ID );
+
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
+
+		?>
+
+		<div class="col-<?php echo $col_layout ?>">
+
+		  <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
+		  <div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
+		  </div>
+		
+	 	 </div> 
+
+	  <?php
+		 
+		
+	 } 
+	  die; // here we exit the script and even no wp_reset_query() required!
+}
+
+add_action('wp_ajax_loadmore', 'misha_loadmore_ajax_handler'); // wp_ajax_{action}
+add_action('wp_ajax_nopriv_loadmore', 'misha_loadmore_ajax_handler'); // wp_ajax_nopriv_{action}
+
+// Using Ajax to pass parameters and create load more for blog grid layout
+// ### END
+// #####################
 
 
 
@@ -476,8 +616,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 // From CPT UI
 // Post Type: Blog Grid Layouts.
-
-
 function cptui_register_my_cpts_blog_grid_layouts() {
 
      $labels = [
@@ -519,5 +657,8 @@ function cptui_register_my_cpts_blog_grid_layouts() {
 add_action( 'init', 'cptui_register_my_cpts_blog_grid_layouts' );
 
  
+
+
+
 
 
