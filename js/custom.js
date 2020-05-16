@@ -1,8 +1,6 @@
 
 jQuery(function($){
 	
-	console.log(misha_loadmore_params);
-	
 	// use jQuery code inside this to avoid "$ is not defined" error
 	$('.misha_loadmore').click(function(){
 
@@ -12,22 +10,15 @@ jQuery(function($){
 			'action': 'loadmore',
 			'query': misha_loadmore_params.posts, // that's how we get params from wp_localize_script() function
 			'page' : misha_loadmore_params.current_page,
-			'current_page2' : misha_loadmore_params.ajaxurl2,
-			'test_x' : misha_loadmore_params.test2,
-			'col_layout' :  misha_loadmore_params.column_layout
-		};
-
-		data1 = {
-			'action': 'loadmore',
-			'query': misha_loadmore_params.posts, // that's how we get params from wp_localize_script() function
-			'page' : misha_loadmore_params.current_page,
-			'current_page2' : misha_loadmore_params.ajaxurl2,
-			'test_x' : misha_loadmore_params.test2
+			'current_page' : misha_loadmore_params.ajaxurl2,
+			'col_layout' :  misha_loadmore_params.column_layout,
+			'num_of_post' : misha_loadmore_params.number_of_post
 		};
 
 
-		console.log(data);
- 
+	//	if ( misha_loadmore_params.current_page == misha_loadmore_params.max_page ) 
+	//					button.remove(); // if last page, remove the button
+		
 		$.ajax({ // you can also use $.post here
 			url : misha_loadmore_params.ajaxurl, // AJAX handler
 			data : data,
@@ -36,9 +27,13 @@ jQuery(function($){
 				button.text('Loading...'); // change the button text, you can also add a preloader image
 			},
 			success : function( data ){
+				
 				if( data ) { 
 					button.text( 'More posts' ).prev().append(data); // insert new posts
 					misha_loadmore_params.current_page++;
+
+
+		
  
 					if ( misha_loadmore_params.current_page == misha_loadmore_params.max_page ) 
 						button.remove(); // if last page, remove the button

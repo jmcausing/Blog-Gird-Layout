@@ -9,19 +9,17 @@ Author URI:  http://causingdesignscom.kinsta.cloud/
 */
 
 
-
 /* 
 
 Ajax load more reference
-
 
 https://artisansweb.net/load-wordpress-post-ajax/
 
 https://rudrastyh.com/wordpress/load-more-posts-ajax.html
 
-
-
  */
+
+ 
 
 // START - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 // ############################################################################
@@ -57,8 +55,8 @@ function blog_grid_layout_page_function() {
 
 	$post_list = get_posts( array(
 		'numberposts' => $blg_post_number,
-		'orderby'    => 'menu_order',
-		'sort_order' => 'asc',
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
 		'max_num_pages' => 1,
 		'paged' => 1,
 	) );
@@ -213,7 +211,8 @@ function SubmCLICKED(e){
 						$selected_col = ( in_array($value_col, $blg_column) ) ? 'selected' : '';
 	
 						echo '<option ' . $selected_col . ' value="' . $value_col . '">'. $value_col .'</option>';
-	
+
+						
 					}
 				}
 
@@ -288,10 +287,14 @@ if ($blg_column == null && $blg_post_number == null && $blg_category == null) {
 }
 
 
+
 if ( isset($blg_column) )  {
 	foreach($blg_column as $col_num) {
 
-		if ($col_num == 4) {
+		if ($col_num == 1) {
+			$set_column = 12;
+		} 
+		elseif ($col_num == 4) {
 			$set_column = 3;
 		}
 		elseif ($col_num ==3) {
@@ -300,14 +303,10 @@ if ( isset($blg_column) )  {
 		elseif ($col_num = 2) {
 			$set_column = 6;
 		}
-		elseif ($col_num = 1) {
-			$set_column = 12;
-		}
-		else { $set_column = 12; }
+	
+		else { $set_column = 12; }	
 	}	
 }
-
-
 
 
 		// ##########
@@ -315,29 +314,43 @@ if ( isset($blg_column) )  {
 		// Link jquery custom.js file and call ajax
 		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
 
-		global $wp_query; 
-			
-		// In most cases it is already included on the page and this line can be removed
-		wp_enqueue_script('jquery');
+		// query cpt
+		$args = array(
+			'post_status'       => 'publish',
+			'posts_per_page'    => $blg_post_number,
+			'post_type'         => 'blog_grid_layouts',
+		);
 
-		// register our main script but do not enqueue it yet
-		wp_register_script( 'my_loadmore', plugin_dir_url(__FILE__).'js/custom.js', array('jquery') );
+		// set variable for query cpt
+		$query_pages = new WP_Query( $args );
 
-		// now the most interesting part
-		// we have to pass parameters to myloadmore.js script but we can get the parameters values only in PHP
-		// you can define variables directly in your HTML but I decided that the most proper way is wp_localize_script()
-		wp_localize_script( 'my_loadmore', 'misha_loadmore_params', array(
-			'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
-			'posts' => json_encode( $wp_query->query_vars ), // everything about your loop is here
-			'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
-			'max_page' => $wp_query->max_num_pages,
-			'column_layout' => $set_column,
-			'number_of_post' => $blg_post_number
+		// get current max pages. if 50 post to display and there are only 16 entries it will get '1' value for max pages
+		$max_num_pages = $query_pages->max_num_pages;
 
-		) );
+		// if there are more page to load, load ajax and jquery script
+		if ($max_num_pages != 1) {
 
-		wp_enqueue_script( 'my_loadmore' );
+			// In most cases it is already included on the page and this line can be removed
+			wp_enqueue_script('jquery');
 
+			// register our main script but do not enqueue it yet
+			wp_register_script( 'my_loadmore', plugin_dir_url(__FILE__).'js/custom.js', array('jquery') );
+
+
+			// now the most interesting part
+			// we have to pass parameters to myloadmore.js script but we can get the parameters values only in PHP
+			// you can define variables directly in your HTML but I decided that the most proper way is wp_localize_script()
+			wp_localize_script( 'my_loadmore', 'misha_loadmore_params', array(
+				'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
+				'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+				'max_page' => $max_num_pages,
+				'column_layout' => $set_column,
+				'number_of_post' => $blg_post_number
+
+			) );
+			wp_enqueue_script( 'my_loadmore' );
+
+		}
 
 		// Link jquery custom.js file and call ajax
 		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
@@ -380,18 +393,25 @@ if ( isset($blg_column) )  {
   </div>
 
 
-  <div class="misha_loadmore">More posts</div>
+<?php 
 
 
+// check if there are more entries to display
+if ($max_num_pages != 1) { 
+	echo '<div class="misha_loadmore">More posts</div>';
+}
+
+?>
 
 </div>
 <!-- #################### -->
 <!-- Bootstrap grid END -->
 
 
+
+
+
 <?php
-
-
 }
 // ###############################
 // END -- HTML meta box function
@@ -469,6 +489,7 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 		);
 	}
 	function blg_custom_admin_titles( $title, $post_id) {
+		
 
 		global $post_type;
 
@@ -478,6 +499,7 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 			$output = $html_name ;
 			return $output;
 		}
+		else return $title;
 
 	}
 	
@@ -544,11 +566,12 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 // ### START
 // #####################
 
-function misha_loadmore_ajax_handler() {
+function blg_loadmore_ajax_handler() {
 
 	// Retrieve data from ajax
 	$col_layout = $_POST['col_layout'];
-
+	$number_of_post_to_display = $_POST['num_of_post'];
+	$cur_page = $_POST['page'] + 1;
 
 	$current_page = 1;
 
@@ -559,10 +582,11 @@ function misha_loadmore_ajax_handler() {
 	$post_id = $post->ID;
 
 	$post_list = get_posts( array(
-		'numberposts' => 3,
-		'orderby'    => 'menu_order',
-		'sort_order' => 'asc',
-		'paged' => $current_page,
+		'numberposts' => $number_of_post_to_display,
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
+		'max_num_pages' => 1,
+		'paged' => $cur_page,
 		
 	) );
 	 
@@ -590,14 +614,13 @@ function misha_loadmore_ajax_handler() {
 	 	 </div> 
 
 	  <?php
-		 
 		
 	 } 
 	  die; // here we exit the script and even no wp_reset_query() required!
 }
 
-add_action('wp_ajax_loadmore', 'misha_loadmore_ajax_handler'); // wp_ajax_{action}
-add_action('wp_ajax_nopriv_loadmore', 'misha_loadmore_ajax_handler'); // wp_ajax_nopriv_{action}
+add_action('wp_ajax_loadmore', 'blg_loadmore_ajax_handler'); // wp_ajax_{action}
+add_action('wp_ajax_nopriv_loadmore', 'blg_loadmore_ajax_handler'); // wp_ajax_nopriv_{action}
 
 // Using Ajax to pass parameters and create load more for blog grid layout
 // ### END
