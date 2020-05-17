@@ -120,7 +120,30 @@ function SubmCLICKED(e){
 }
 </script>
 
+
+
 <style>
+
+
+
+	/* bootsrap height columns */
+	.blg_preview_container.container .col-12 .blog_grid_container {
+		height: 350px;
+	}
+
+	.blg_preview_container.container .col-6 .blog_grid_container {
+		height: 250px;
+	}
+
+	.blg_preview_container.container .col-4 .blog_grid_container {
+		height: 200px;
+	}
+
+	.blg_preview_container.container .col-3 .blog_grid_container {
+		height: 170px;
+	}
+	/* bootsrap height columns */
+
 
 	.blg_field_settings_container.container .row {
 		padding: 5px;
@@ -446,7 +469,6 @@ if ($max_num_pages != 1) {
 
 <?php
 
-
 	// This is ajax preview for blog grid layouy
 	// ######
 	// START
@@ -466,7 +488,6 @@ if ($max_num_pages != 1) {
 				'number_of_post' => $blg_post_number
 
 				) 
-
 				
 	);
 	wp_enqueue_script( 'blg_preview_action' );
@@ -474,7 +495,6 @@ if ($max_num_pages != 1) {
 	// This is ajax preview for blog grid layouy
 	// END
 	// ######
-
 
 
 
@@ -769,7 +789,6 @@ add_action( 'wp_ajax_blg_preview_action', 'blg_preview_action' );
 
 function blg_preview_action() {
 
-
 	// Retrieve data from ajax
 	$col_layout = $_POST['col_layout'];
 	$number_of_post_to_display = $_POST['num_of_post'];
@@ -821,7 +840,8 @@ function blg_preview_action() {
 	die; // here we exit the script and even no wp_reset_query() required!
 
 	wp_die();
-	}
+
+}
 
 // This is ajax preview for blog grid layouy
 // END
