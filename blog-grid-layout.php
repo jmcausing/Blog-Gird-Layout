@@ -121,6 +121,10 @@ function SubmCLICKED(e){
 </script>
 
 <style>
+
+	.blg_field_settings_container.container .row {
+		padding: 5px;
+	}
 	.blog_grid_container { 
 		border: 1px solid red;
 		width: 100%;
@@ -164,7 +168,7 @@ function SubmCLICKED(e){
 </style>
 
 
-<div class="container">
+<div class="blg_field_settings_container container">
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="blg_input_label_name">
@@ -186,7 +190,7 @@ function SubmCLICKED(e){
   	<div class="row">
     	<div class="col-sm-4">
 
-			<select name="blg_column[]" id="blog_post_grid_cat" >
+			<select name="blg_column[]" id="blg_col_num" >
 
 				<?php
 
@@ -274,39 +278,68 @@ function SubmCLICKED(e){
 <!-- #################### -->
 
 
-<div class="container">
-  <div class="row">
-
-
-
-<?php
-
-if ($blg_column == null && $blg_post_number == null && $blg_category == null) {
-	echo '<h2 style="color: red;"> Nothing yet to preview.. Set some settings first then save it!</h2>';
-	return;	
+<style>
+.blg_prev_loading {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
 }
 
-
-
-if ( isset($blg_column) )  {
-	foreach($blg_column as $col_num) {
-
-		if ($col_num == 1) {
-			$set_column = 12;
-		} 
-		elseif ($col_num == 4) {
-			$set_column = 3;
-		}
-		elseif ($col_num ==3) {
-			$set_column = 4;
-		}
-		elseif ($col_num = 2) {
-			$set_column = 6;
-		}
-	
-		else { $set_column = 12; }	
-	}	
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
 }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="blg_prev_loading" style="display: none;"></div>
+
+<div class="blg_preview_container container">
+		
+
+  		<div class="row">
+
+		<?php
+
+		if ($blg_column == null && $blg_post_number == null && $blg_category == null) {
+			echo '<h2 style="color: red;"> Nothing yet to preview.. Set some settings first then save it!</h2>';
+			return;	
+		}
+
+
+
+		if ( isset($blg_column) )  {
+			foreach($blg_column as $col_num) {
+
+				if ($col_num == 1) {
+					$set_column = 12;
+				} 
+				elseif ($col_num == 4) {
+					$set_column = 3;
+				}
+				elseif ($col_num ==3) {
+					$set_column = 4;
+				}
+				elseif ($col_num = 2) {
+					$set_column = 6;
+				}
+			
+				else { $set_column = 12; }	
+			}	
+		}
 
 
 		// ##########
@@ -412,6 +445,40 @@ if ($max_num_pages != 1) {
 
 
 <?php
+
+
+	// This is ajax preview for blog grid layouy
+	// ######
+	// START
+
+	wp_enqueue_script('jquery');
+		
+	wp_enqueue_script( 'blg_preview_action', plugins_url( '/js/blg_preview.js', __FILE__ ), array('jquery') );
+
+	// in JavaScript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
+	wp_localize_script( 'blg_preview_action', 'ajax_object',
+			array( 
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'blg_ajax_data' => 1234,
+				'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+				'max_page' => $max_num_pages,
+				'column_layout' => $set_column,
+				'number_of_post' => $blg_post_number
+
+				) 
+
+				
+	);
+	wp_enqueue_script( 'blg_preview_action' );
+
+	// This is ajax preview for blog grid layouy
+	// END
+	// ######
+
+
+
+
+
 }
 // ###############################
 // END -- HTML meta box function
@@ -685,3 +752,77 @@ add_action( 'init', 'cptui_register_my_cpts_blog_grid_layouts' );
 
 
 
+
+
+
+
+
+
+
+
+
+
+// This is ajax preview for blog grid layouy
+// ######
+// START		
+add_action( 'wp_ajax_blg_preview_action', 'blg_preview_action' );
+
+function blg_preview_action() {
+
+
+	// Retrieve data from ajax
+	$col_layout = $_POST['col_layout'];
+	$number_of_post_to_display = $_POST['num_of_post'];
+	$cur_page = $_POST['page'];
+
+	$current_page = 1;
+
+	$current_page++;
+
+	global $post;
+
+	$post_id = $post->ID;
+
+	$post_list = get_posts( array(
+		'numberposts' => $number_of_post_to_display,
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
+		'max_num_pages' => 1,
+		'paged' => $cur_page,
+		
+	) );
+	 
+	$posts = array();
+	foreach ( $post_list as $post ) {
+
+		$posts[] += $post->ID;
+		
+		$post_title =  $post->post_title. '<br>';
+
+		$featured_image =  get_the_post_thumbnail_url( $post->ID );
+
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
+
+		?>
+
+		<div class="col-<?php echo $col_layout ?>">
+
+		  <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
+		  <div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
+		  </div>
+		
+	 	 </div> 
+
+	  <?php
+		
+	 } 
+	die; // here we exit the script and even no wp_reset_query() required!
+
+	wp_die();
+	}
+
+// This is ajax preview for blog grid layouy
+// END
+// ######
