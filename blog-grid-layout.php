@@ -124,8 +124,6 @@ function SubmCLICKED(e){
 
 <style>
 
-
-
 	/* bootsrap height columns */
 	.blg_preview_container.container .col-12 .blog_grid_container {
 		height: 350px;
@@ -846,3 +844,185 @@ function blg_preview_action() {
 // This is ajax preview for blog grid layouy
 // END
 // ######
+
+
+
+
+
+
+// START -- Generate shortcodes for each blog post layout
+// #####
+
+// Load causing_forms_query() function after WP loads.
+add_action( 'init', 'blg_add_shortcode' );
+
+function blg_add_shortcode() {
+ 	add_shortcode('blg', 'blg_shortcode');  // check also if the shortcode string is the same in the admin column
+}
+
+function blg_shortcode( $attr, $content="") {
+
+	// connect to database with post type 'blog_grid_layouts' to get the ID of each post. You can use post_title if you want.
+	global $wpdb; 
+	$post_type = 'blog_grid_layouts';
+	$my_query = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'blog_grid_layouts' AND post_status IN ('draft', 'publish') ");
+
+	if ( !is_null($my_query) ) { // check if query is not empty
+
+		// Loop start 
+		foreach( $my_query as $blg_query) {		
+			
+			// var_dump($blg_query);
+
+			$blg_id =  $blg_query->ID; // post_id variable
+			$blg_title = $blg_query->post_title;
+
+
+
+			$args = shortcode_atts( array( 
+				'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
+			), $attr );	
+
+
+			global $post;
+
+			$post_id = $post->ID;
+
+
+			$blg_number_posts = get_post_meta( $blg_id, 'blg_post_number', true );
+			$blg_column = get_post_meta( $blg_id, 'blg_column', true );
+			$blg_cat = get_post_meta( $blg_id, 'blg_category', true );
+
+
+
+			if ( isset($blg_column) )  {
+				foreach($blg_column as $col_num) {
+
+					if ($col_num == 1) {
+						$set_column = 12;
+					} 
+					elseif ($col_num == 4) {
+						$set_column = 3;
+					}
+					elseif ($col_num ==3) {
+						$set_column = 4;
+					}
+					elseif ($col_num = 2) {
+						$set_column = 6;
+					}
+				
+					else { $set_column = 12; }	
+				}	
+			}
+
+
+
+			$post_list = get_posts( array(
+		
+				'numberposts' => $blg_number_posts,
+				
+			) );
+			
+			$featured_image =  get_the_post_thumbnail_url( $post_id );
+		
+			// start loop
+			foreach ( $post_list as $post ) {
+		
+				$posts[] += $post->ID;
+				
+				$post_title =  $post->post_title. '<br>';
+		
+				$featured_image =  get_the_post_thumbnail_url( $post->ID );
+		
+				if ( !$featured_image)  {
+					$featured_image = '';
+				}
+		
+				// need to use .= to append the data. If not, it will get just 1 data.
+				$output .= '
+				
+
+					<div class="col-' .  $set_column . ' ">
+
+						<div class="blog_grid_container" style="background-image: url( ' . $featured_image . ' ); "  >
+							<div class="post_title_grid"> 	' .  $post->post_title . ' </div>
+						</div>
+				
+					</div> 		
+				';
+
+		
+				
+				} 
+				// end loop
+
+				return $output;
+	
+			
+		
+		
+
+
+		}
+		// Loop end
+	}
+
+	else echo "no query here";
+
+
+
+
+
+/* 
+
+	global $post;
+
+	$post_id = $post->ID;
+
+	$post_list = get_posts( array(
+
+		'numberposts' => 15,
+		
+	) );
+	 
+	$posts = array();
+
+	// start loop
+	foreach ( $post_list as $post ) {
+
+		$posts[] += $post->ID;
+		
+		$post_title =  $post->post_title. '<br>';
+
+		$featured_image =  get_the_post_thumbnail_url( $post->ID );
+
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
+
+		?>
+
+
+
+		  	<div class="post_title_grid"> 	<?php echo $post_title ?>  </div>
+
+	 	
+
+	<?php
+	 } 
+	 // end loop
+
+	  */
+
+
+
+}
+
+ 
+
+
+
+
+
+// #####
+// END -- Generate shortcodes for each blog post layout
