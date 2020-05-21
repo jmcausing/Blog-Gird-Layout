@@ -566,25 +566,27 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 	function blg_register_custom_admin_titles() {
 
-		add_filter(
-			'the_title',
-			'blg_custom_admin_titles',
-			99,
-			2
-		);
-	}
-	function blg_custom_admin_titles( $title, $post_id) {
-		
-
 		global $post_type;
 
-		// check if post type name is correct
 		if ($post_type == 'blog_grid_layouts') {
-			$html_name = get_post_meta( $post_id , 'blg_name', true );
-			$output = $html_name ;
-			return $output;
+		
+			add_filter(
+				'the_title',
+				'blg_custom_admin_titles',
+				101,
+				2
+			);
 		}
-		else return $title;
+	}
+
+	function blg_custom_admin_titles( $title, $post_id) {
+
+		$blg_post_name = get_post_meta( $post_id , 'blg_name', true );
+
+		// $output = get_post_type($post_id);
+		
+		$output = $blg_post_name ;
+		return $output;
 
 	}
 	
@@ -850,10 +852,12 @@ function blg_preview_action() {
 
 
 
+
+
 // START -- Generate shortcodes for each blog post layout
 // #####
 
-// Load causing_forms_query() function after WP loads.
+// Load blg_add_shortcode() function after WP loads.
 add_action( 'init', 'blg_add_shortcode' );
 
 function blg_add_shortcode() {
@@ -861,6 +865,51 @@ function blg_add_shortcode() {
 }
 
 function blg_shortcode( $attr, $content="") {
+
+
+
+
+
+/*   
+// OLD
+
+	global $wpdb; 
+	//	$post_type = 'post';
+	$my_query = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'blog_grid_layouts' AND post_status IN ('draft', 'publish') ");
+
+
+// 	var_dump($my_query);
+
+	// start loop
+	foreach ( $my_query as $blg_query ) {
+
+
+		
+
+		
+
+		$args = shortcode_atts( array( 
+			'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
+		), $attr );	
+
+		$blg_id_new = $args['the_post_id'];
+
+	
+		$output =  'This is the blg ID post: ' . $args['the_post_id'] . '<br>';
+		
+		return $output;
+		
+
+
+	}
+	// end loop
+
+ */
+
+
+
+	
+	// NEW
 
 	// connect to database with post type 'blog_grid_layouts' to get the ID of each post. You can use post_title if you want.
 	global $wpdb; 
@@ -871,6 +920,8 @@ function blg_shortcode( $attr, $content="") {
 
 		// Loop start 
 		foreach( $my_query as $blg_query) {		
+
+
 			
 			// var_dump($blg_query);
 
@@ -883,15 +934,17 @@ function blg_shortcode( $attr, $content="") {
 				'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
 			), $attr );	
 
+			$blg_id_new = $args['the_post_id'];
+
 
 			global $post;
 
 			$post_id = $post->ID;
 
 
-			$blg_number_posts = get_post_meta( $blg_id, 'blg_post_number', true );
-			$blg_column = get_post_meta( $blg_id, 'blg_column', true );
-			$blg_cat = get_post_meta( $blg_id, 'blg_category', true );
+			$blg_number_posts = get_post_meta( $blg_id_new, 'blg_post_number', true );
+			$blg_column = get_post_meta( $blg_id_new, 'blg_column', true );
+			$blg_cat = get_post_meta( $blg_id_new, 'blg_category', true );
 
 
 
@@ -924,6 +977,16 @@ function blg_shortcode( $attr, $content="") {
 			) );
 			
 			$featured_image =  get_the_post_thumbnail_url( $post_id );
+
+
+			// start of html div container
+			// #####
+			$output = 
+			'<div class="blg_container"> 
+				<div class="row">
+			';
+
+
 		
 			// start loop
 			foreach ( $post_list as $post ) {
@@ -939,10 +1002,10 @@ function blg_shortcode( $attr, $content="") {
 				}
 		
 				// need to use .= to append the data. If not, it will get just 1 data.
-				$output .= '
-				
+				$output .=  
 
-					<div class="col-' .  $set_column . ' ">
+				'
+				<div class="col-' .  $set_column . ' ">
 
 						<div class="blog_grid_container" style="background-image: url( ' . $featured_image . ' ); "  >
 							<div class="post_title_grid"> 	' .  $post->post_title . ' </div>
@@ -956,15 +1019,15 @@ function blg_shortcode( $attr, $content="") {
 				} 
 				// end loop
 
-				return $output;
-	
-			
-		
-		
+				// #####
+				// start of html div container
+				$output .= '</div></div>';
 
+				return $output;		
 
 		}
 		// Loop end
+
 	}
 
 	else echo "no query here";
@@ -973,56 +1036,39 @@ function blg_shortcode( $attr, $content="") {
 
 
 
-/* 
-
-	global $post;
-
-	$post_id = $post->ID;
-
-	$post_list = get_posts( array(
-
-		'numberposts' => 15,
-		
-	) );
-	 
-	$posts = array();
-
-	// start loop
-	foreach ( $post_list as $post ) {
-
-		$posts[] += $post->ID;
-		
-		$post_title =  $post->post_title. '<br>';
-
-		$featured_image =  get_the_post_thumbnail_url( $post->ID );
-
-		if ( !$featured_image)  {
-			$featured_image = '';
-		}
-
-		?>
-
-
-
-		  	<div class="post_title_grid"> 	<?php echo $post_title ?>  </div>
-
-	 	
-
-	<?php
-	 } 
-	 // end loop
-
-	  */
-
-
 
 }
-
- 
-
-
 
 
 
 // #####
 // END -- Generate shortcodes for each blog post layout
+
+
+
+
+// ####
+// Start -- Add CSS and JS 
+
+
+
+
+function add_theme_scripts() {
+	wp_enqueue_style( 'style', get_stylesheet_uri() );
+   
+	wp_enqueue_style( 'slider',  plugin_dir_url(__FILE__) . '/css/blg.css', array(), '1.1', 'all');
+	wp_enqueue_style( 'bootstrap4',  plugin_dir_url(__FILE__) . '/css/bootstrap.min.css', array(), '1.1', 'all');
+   
+//	wp_enqueue_script( 'script', get_template_directory_uri() . '/js/script.js', array ( 'jquery' ), 1.1, true);
+   
+	  if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	  }
+  }
+  add_action( 'wp_enqueue_scripts', 'add_theme_scripts' );
+
+  // End -- Add CSS and JS 
+  // ####
+
+
+  
