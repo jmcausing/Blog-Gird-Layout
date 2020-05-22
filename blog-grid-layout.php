@@ -372,7 +372,7 @@ function SubmCLICKED(e){
 		$args = array(
 			'post_status'       => 'publish',
 			'posts_per_page'    => $blg_post_number,
-			'post_type'         => 'blog_grid_layouts',
+			'post_type'         => 'post',
 		);
 
 		// set variable for query cpt
