@@ -9,6 +9,18 @@ Author URI:  http://causingdesignscom.kinsta.cloud/
 */
 
 
+/* 
+
+Ajax load more reference
+
+https://artisansweb.net/load-wordpress-post-ajax/
+
+https://rudrastyh.com/wordpress/load-more-posts-ajax.html
+
+ */
+
+ 
+
 // START - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 // ############################################################################
 function meta_box_blog_grid_layout( $post ) {
@@ -42,9 +54,11 @@ function blog_grid_layout_page_function() {
 	$blg_category = (!empty( get_post_meta($post_id, 'blg_category', true))) ? get_post_meta($post_id, 'blg_category', true) : '';
 
 	$post_list = get_posts( array(
-		'numberposts' => 10,
-		'orderby'    => 'menu_order',
-		'sort_order' => 'asc'
+		'numberposts' => $blg_post_number,
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
+		'max_num_pages' => 1,
+		'paged' => 1,
 	) );
 	 
 	$posts = array();
@@ -69,8 +83,6 @@ if (PublishButton)  {PublishButton.addEventListener("click", SubmCLICKED, false)
 
 
 function SubmCLICKED(e){   
-
-	
 
 
   var passed= false;
@@ -100,26 +112,43 @@ function SubmCLICKED(e){
 		} 
 		
 		else{passed=true;}
-
-
-
-
-
 		
   }
   if (!passed) { e.preventDefault();  return false;  }
 
 
-
-
-
 }
 </script>
 
+
+
 <style>
+
+	/* bootsrap height columns */
+	.blg_preview_container.container .col-12 .blog_grid_container {
+		height: 350px;
+	}
+
+	.blg_preview_container.container .col-6 .blog_grid_container {
+		height: 250px;
+	}
+
+	.blg_preview_container.container .col-4 .blog_grid_container {
+		height: 200px;
+	}
+
+	.blg_preview_container.container .col-3 .blog_grid_container {
+		height: 170px;
+	}
+	/* bootsrap height columns */
+
+
+	.blg_field_settings_container.container .row {
+		padding: 5px;
+	}
 	.blog_grid_container { 
 		border: 1px solid red;
-		width: 250px;
+		width: 100%;
 		height: 100px;
 		margin: auto;
 		margin-bottom: 20px;
@@ -128,10 +157,39 @@ function SubmCLICKED(e){
 	.blog_grid_container {
     background-size: cover;
 	}
+
+
+
+.misha_loadmore{
+	background-color: #ddd;
+	border-radius: 2px;
+	display: block;
+	text-align: center;
+	font-size: 14px;
+	font-size: 0.875rem;
+	font-weight: 800;
+	letter-spacing:1px;
+	cursor:pointer;
+	text-transform: uppercase;
+	padding: 10px 0;
+	transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.3s ease-in-out;  
+}
+.misha_loadmore:hover{
+	background-color: #767676;
+	color: #fff;
+}
+
+
+.post_title_grid {
+    background: #ffff0073;
+    padding: 10px;
+}
+
+	
 </style>
 
 
-<div class="container">
+<div class="blg_field_settings_container container">
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="blg_input_label_name">
@@ -153,7 +211,7 @@ function SubmCLICKED(e){
   	<div class="row">
     	<div class="col-sm-4">
 
-			<select name="blg_column[]" id="blog_post_grid_cat" >
+			<select name="blg_column[]" id="blg_col_num" >
 
 				<?php
 
@@ -178,7 +236,8 @@ function SubmCLICKED(e){
 						$selected_col = ( in_array($value_col, $blg_column) ) ? 'selected' : '';
 	
 						echo '<option ' . $selected_col . ' value="' . $value_col . '">'. $value_col .'</option>';
-	
+
+						
 					}
 				}
 
@@ -238,39 +297,127 @@ function SubmCLICKED(e){
 
 <!-- Bootstrap grid start  / Display blog grid preview -->
 <!-- #################### -->
-<div class="container">
-  <div class="row">
 
 
-
-<?php
-
-if ($blg_column == null && $blg_post_number == null && $blg_category == null) {
-	echo '<h2 style="color: red;"> Nothing yet to preview.. Set some settings first then save it!</h2>';
-	return;	
+<style>
+.blg_prev_loading {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
 }
 
-
-if ( isset($blg_column) )  {
-	foreach($blg_column as $col_num) {
-
-		if ($col_num == 4) {
-			$set_column = 3;
-		}
-		elseif ($col_num ==3) {
-			$set_column = 4;
-		}
-		elseif ($col_num = 2) {
-			$set_column = 6;
-		}
-		else { $set_column = 12; }
-	}	
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
 }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="blg_prev_loading" style="display: none;"></div>
+
+<div class="blg_preview_container container">
+		
+
+  		<div class="row">
+
+		<?php
+
+		if ($blg_column == null && $blg_post_number == null && $blg_category == null) {
+			echo '<h2 style="color: red;"> Nothing yet to preview.. Set some settings first then save it!</h2>';
+			return;	
+		}
+
+
+
+		if ( isset($blg_column) )  {
+			foreach($blg_column as $col_num) {
+
+				if ($col_num == 1) {
+					$set_column = 12;
+				} 
+				elseif ($col_num == 4) {
+					$set_column = 3;
+				}
+				elseif ($col_num ==3) {
+					$set_column = 4;
+				}
+				elseif ($col_num = 2) {
+					$set_column = 6;
+				}
+			
+				else { $set_column = 12; }	
+			}	
+		}
+
+
+		// ##########
+		// START
+		// Link jquery custom.js file and call ajax
+		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
+
+		// query cpt
+		$args = array(
+			'post_status'       => 'publish',
+			'posts_per_page'    => $blg_post_number,
+			'post_type'         => 'blog_grid_layouts',
+		);
+
+		// set variable for query cpt
+		$query_pages = new WP_Query( $args );
+
+		// get current max pages. if 50 post to display and there are only 16 entries it will get '1' value for max pages
+		$max_num_pages = $query_pages->max_num_pages;
+
+		// if there are more page to load, load ajax and jquery script
+		if ($max_num_pages != 1) {
+
+			// In most cases it is already included on the page and this line can be removed
+			wp_enqueue_script('jquery');
+
+			// register our main script but do not enqueue it yet
+			wp_register_script( 'my_loadmore', plugin_dir_url(__FILE__).'js/custom.js', array('jquery') );
+
+
+			// now the most interesting part
+			// we have to pass parameters to myloadmore.js script but we can get the parameters values only in PHP
+			// you can define variables directly in your HTML but I decided that the most proper way is wp_localize_script()
+			wp_localize_script( 'my_loadmore', 'misha_loadmore_params', array(
+				'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
+				'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+				'max_page' => $max_num_pages,
+				'column_layout' => $set_column,
+				'number_of_post' => $blg_post_number
+
+			) );
+			wp_enqueue_script( 'my_loadmore' );
+
+		}
+
+		// Link jquery custom.js file and call ajax
+		// This is to pass data from this function -> to jquery -> and get it from misha_loadmore_ajax_handler() function
+		// END
+		// ##########
+
+
 
 	// start loop
 	foreach ( $post_list as $post ) {
 
 	   $posts[] += $post->ID;
+	   
 
 	 	 $post_title =  $post->post_title. '<br>';
 
@@ -282,12 +429,11 @@ if ( isset($blg_column) )  {
 
 	?>
 
-
 	<!-- Set number of columns. 4 is 3 columns. 3 is 4 columns Bootstrap 12 column grid. -->
 	<div class="col-<?php echo $set_column;  ?>">
 
 		<div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
-		
+		<div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
 		</div>
 	  
 	</div>
@@ -298,14 +444,59 @@ if ( isset($blg_column) )  {
 
 	?>
 
-
   </div>
+
+
+<?php 
+
+
+// check if there are more entries to display
+if ($max_num_pages != 1) { 
+	echo '<div class="misha_loadmore">More posts</div>';
+}
+
+?>
+
 </div>
 <!-- #################### -->
 <!-- Bootstrap grid END -->
 
 
+
+
+
 <?php
+
+	// This is ajax preview for blog grid layouy
+	// ######
+	// START
+
+	wp_enqueue_script('jquery');
+		
+	wp_enqueue_script( 'blg_preview_action', plugins_url( '/js/blg_preview.js', __FILE__ ), array('jquery') );
+
+	// in JavaScript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
+	wp_localize_script( 'blg_preview_action', 'ajax_object',
+			array( 
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'blg_ajax_data' => 1234,
+				'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+				'max_page' => $max_num_pages,
+				'column_layout' => $set_column,
+				'number_of_post' => $blg_post_number
+
+				) 
+				
+	);
+	wp_enqueue_script( 'blg_preview_action' );
+
+	// This is ajax preview for blog grid layouy
+	// END
+	// ######
+
+
+
+
 }
 // ###############################
 // END -- HTML meta box function
@@ -360,10 +551,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 
 
-
-
-
-
 // START -  Admin column title and data
 // ####################################
 //
@@ -379,23 +566,27 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 	function blg_register_custom_admin_titles() {
 
-		add_filter(
-			'the_title',
-			'blg_custom_admin_titles',
-			99,
-			2
-		);
-	}
-	function blg_custom_admin_titles( $title, $post_id) {
-
 		global $post_type;
 
-		// check if post type name is correct
 		if ($post_type == 'blog_grid_layouts') {
-			$html_name = get_post_meta( $post_id , 'blg_name', true );
-			$output = $html_name ;
-			return $output;
+		
+			add_filter(
+				'the_title',
+				'blg_custom_admin_titles',
+				101,
+				2
+			);
 		}
+	}
+
+	function blg_custom_admin_titles( $title, $post_id) {
+
+		$blg_post_name = get_post_meta( $post_id , 'blg_name', true );
+
+		// $output = get_post_type($post_id);
+		
+		$output = $blg_post_name ;
+		return $output;
 
 	}
 	
@@ -458,10 +649,69 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 
 
+// Using Ajax to pass parameters and create load more for blog grid layout
+// ### START
+// #####################
 
+function blg_loadmore_ajax_handler() {
 
+	// Retrieve data from ajax
+	$col_layout = $_POST['col_layout'];
+	$number_of_post_to_display = $_POST['num_of_post'];
+	$cur_page = $_POST['page'] + 1;
 
+	$current_page = 1;
 
+	$current_page++;
+
+	global $post;
+
+	$post_id = $post->ID;
+
+	$post_list = get_posts( array(
+		'numberposts' => $number_of_post_to_display,
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
+		'max_num_pages' => 1,
+		'paged' => $cur_page,
+		
+	) );
+	 
+	$posts = array();
+	foreach ( $post_list as $post ) {
+
+		$posts[] += $post->ID;
+		
+		$post_title =  $post->post_title. '<br>';
+
+		$featured_image =  get_the_post_thumbnail_url( $post->ID );
+
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
+
+		?>
+
+		<div class="col-<?php echo $col_layout ?>">
+
+		  <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
+		  <div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
+		  </div>
+		
+	 	 </div> 
+
+	  <?php
+		
+	 } 
+	  die; // here we exit the script and even no wp_reset_query() required!
+}
+
+add_action('wp_ajax_loadmore', 'blg_loadmore_ajax_handler'); // wp_ajax_{action}
+add_action('wp_ajax_nopriv_loadmore', 'blg_loadmore_ajax_handler'); // wp_ajax_nopriv_{action}
+
+// Using Ajax to pass parameters and create load more for blog grid layout
+// ### END
+// #####################
 
 
 
@@ -476,8 +726,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 // From CPT UI
 // Post Type: Blog Grid Layouts.
-
-
 function cptui_register_my_cpts_blog_grid_layouts() {
 
      $labels = [
@@ -521,3 +769,306 @@ add_action( 'init', 'cptui_register_my_cpts_blog_grid_layouts' );
  
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// This is ajax preview for blog grid layouy
+// ######
+// START		
+add_action( 'wp_ajax_blg_preview_action', 'blg_preview_action' );
+
+function blg_preview_action() {
+
+	// Retrieve data from ajax
+	$col_layout = $_POST['col_layout'];
+	$number_of_post_to_display = $_POST['num_of_post'];
+	$cur_page = $_POST['page'];
+
+	$current_page = 1;
+
+	$current_page++;
+
+	global $post;
+
+	$post_id = $post->ID;
+
+	$post_list = get_posts( array(
+		'numberposts' => $number_of_post_to_display,
+		'orderby'    => 'date',
+		'sort_order' => 'desc',
+		'max_num_pages' => 1,
+		'paged' => $cur_page,
+		
+	) );
+	 
+	$posts = array();
+	foreach ( $post_list as $post ) {
+
+		$posts[] += $post->ID;
+		
+		$post_title =  $post->post_title. '<br>';
+
+		$featured_image =  get_the_post_thumbnail_url( $post->ID );
+
+		if ( !$featured_image)  {
+			$featured_image = '';
+		}
+
+		?>
+
+		<div class="col-<?php echo $col_layout ?>">
+
+		  <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
+		  <div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
+		  </div>
+		
+	 	 </div> 
+
+	  <?php
+		
+	 } 
+	die; // here we exit the script and even no wp_reset_query() required!
+
+	wp_die();
+
+}
+
+// This is ajax preview for blog grid layouy
+// END
+// ######
+
+
+
+
+
+
+
+
+// START -- Generate shortcodes for each blog post layout
+// #####
+
+// Load blg_add_shortcode() function after WP loads.
+add_action( 'init', 'blg_add_shortcode' );
+
+function blg_add_shortcode() {
+ 	add_shortcode('blg', 'blg_shortcode');  // check also if the shortcode string is the same in the admin column
+}
+
+function blg_shortcode( $attr, $content="") {
+
+
+
+
+
+/*   
+// OLD
+
+	global $wpdb; 
+	//	$post_type = 'post';
+	$my_query = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'blog_grid_layouts' AND post_status IN ('draft', 'publish') ");
+
+
+// 	var_dump($my_query);
+
+	// start loop
+	foreach ( $my_query as $blg_query ) {
+
+
+		
+
+		
+
+		$args = shortcode_atts( array( 
+			'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
+		), $attr );	
+
+		$blg_id_new = $args['the_post_id'];
+
+	
+		$output =  'This is the blg ID post: ' . $args['the_post_id'] . '<br>';
+		
+		return $output;
+		
+
+
+	}
+	// end loop
+
+ */
+
+
+
+	
+	// NEW
+
+	// connect to database with post type 'blog_grid_layouts' to get the ID of each post. You can use post_title if you want.
+	global $wpdb; 
+	$post_type = 'blog_grid_layouts';
+	$my_query = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'blog_grid_layouts' AND post_status IN ('draft', 'publish') ");
+
+	if ( !is_null($my_query) ) { // check if query is not empty
+
+		// Loop start 
+		foreach( $my_query as $blg_query) {		
+
+
+			
+			// var_dump($blg_query);
+
+			$blg_id =  $blg_query->ID; // post_id variable
+			$blg_title = $blg_query->post_title;
+
+
+
+			$args = shortcode_atts( array( 
+				'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
+			), $attr );	
+
+			$blg_id_new = $args['the_post_id'];
+
+
+			global $post;
+
+			$post_id = $post->ID;
+
+
+			$blg_number_posts = get_post_meta( $blg_id_new, 'blg_post_number', true );
+			$blg_column = get_post_meta( $blg_id_new, 'blg_column', true );
+			$blg_cat = get_post_meta( $blg_id_new, 'blg_category', true );
+
+
+
+			if ( isset($blg_column) )  {
+				foreach($blg_column as $col_num) {
+
+					if ($col_num == 1) {
+						$set_column = 12;
+					} 
+					elseif ($col_num == 4) {
+						$set_column = 3;
+					}
+					elseif ($col_num ==3) {
+						$set_column = 4;
+					}
+					elseif ($col_num = 2) {
+						$set_column = 6;
+					}
+				
+					else { $set_column = 12; }	
+				}	
+			}
+
+
+
+			$post_list = get_posts( array(
+		
+				'numberposts' => $blg_number_posts,
+				
+			) );
+			
+			$featured_image =  get_the_post_thumbnail_url( $post_id );
+
+
+			// start of html div container
+			// #####
+			$output = 
+			'<div class="blg_container"> 
+				<div class="row">
+			';
+
+
+		
+			// start loop
+			foreach ( $post_list as $post ) {
+		
+				$posts[] += $post->ID;
+				
+				$post_title =  $post->post_title. '<br>';
+		
+				$featured_image =  get_the_post_thumbnail_url( $post->ID );
+		
+				if ( !$featured_image)  {
+					$featured_image = '';
+				}
+		
+				// need to use .= to append the data. If not, it will get just 1 data.
+				$output .=  
+
+				'
+				<div class="col-' .  $set_column . ' ">
+
+						<div class="blog_grid_container" style="background-image: url( ' . $featured_image . ' ); "  >
+							<div class="post_title_grid"> 	' .  $post->post_title . ' </div>
+						</div>
+				
+					</div> 		
+				';
+
+		
+				
+				} 
+				// end loop
+
+				// #####
+				// start of html div container
+				$output .= '</div></div>';
+
+				return $output;		
+
+		}
+		// Loop end
+
+	}
+
+	else echo "no query here";
+
+
+
+
+
+
+}
+
+
+
+// #####
+// END -- Generate shortcodes for each blog post layout
+
+
+
+
+// ####
+// Start -- Add CSS and JS 
+
+
+
+
+function add_theme_scripts() {
+	wp_enqueue_style( 'style', get_stylesheet_uri() );
+   
+	wp_enqueue_style( 'slider',  plugin_dir_url(__FILE__) . '/css/blg.css', array(), '1.1', 'all');
+	wp_enqueue_style( 'bootstrap4',  plugin_dir_url(__FILE__) . '/css/bootstrap.min.css', array(), '1.1', 'all');
+   
+//	wp_enqueue_script( 'script', get_template_directory_uri() . '/js/script.js', array ( 'jquery' ), 1.1, true);
+   
+	  if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	  }
+  }
+  add_action( 'wp_enqueue_scripts', 'add_theme_scripts' );
+
+  // End -- Add CSS and JS 
+  // ####
+
+
+  
