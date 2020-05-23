@@ -1,6 +1,36 @@
 jQuery(document).ready(function($) {
 
 
+
+    function delay(callback, ms) {
+        var timer = 0;
+        return function() {
+          var context = this, args = arguments;
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            callback.apply(context, args);
+          }, ms || 0);
+        };
+      }
+      
+      
+      // Example usage:
+      
+      $('#post_number_display').keyup(delay(function (e) {
+
+        post_number_value = this.value;
+
+        console.log('Time elapsed!', post_number_value);
+
+
+      }, 1200));
+
+
+
+
+
+
+
 	var data = {
 		'action': 'blg_preview_action',
         'blg_ajax_data': ajax_object.we_value,    // We pass php values differently!
