@@ -170,8 +170,11 @@ function SubmCLICKED(e){
 
 
 .post_title_grid {
-    background: #ffff0073;
+	background: #0000008a;
     padding: 10px;
+    color: #fff;
+    font-weight: 600;
+}
 }
 
 	
