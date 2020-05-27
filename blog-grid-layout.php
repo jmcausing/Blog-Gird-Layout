@@ -3,7 +3,7 @@
 /*
 Plugin Name: Blog Grid Layout
 Plugin URI: http://causingdesignscom.kinsta.cloud/
-Description: Similar to nginx access log where it get get the IP, user-agent, access path and display analytics chart.
+Description: Create blog gird layouts and post it using shortcodes.
 Author: John Mark Causing
 Author URI:  http://causingdesignscom.kinsta.cloud/
 */
