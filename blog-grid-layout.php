@@ -9,17 +9,6 @@ Author URI:  http://causingdesignscom.kinsta.cloud/
 */
 
 
-/* 
-
-Ajax load more reference
-
-https://artisansweb.net/load-wordpress-post-ajax/
-
-https://rudrastyh.com/wordpress/load-more-posts-ajax.html
-
- */
-
- 
 
 // START - Metaboxes / fields / html for custom post type called 'blog_grid_layouts'
 // ############################################################################
@@ -446,7 +435,6 @@ function SubmCLICKED(e){
 
   </div>
 
-
 <?php 
 
 
@@ -463,9 +451,21 @@ if ($max_num_pages != 1) {
 
 
 
-
-
 <?php
+	// query cpt
+	$args = array(
+		'post_status'       => 'publish',
+		'posts_per_page'    => $blg_post_number,
+		'post_type'         => 'post',
+	);
+
+	// set variable for query cpt
+	$query_pages = new WP_Query( $args );
+
+	// get current max pages. if 50 post to display and there are only 16 entries it will get '1' value for max pages
+	$total_post_count = $query_pages->found_posts;
+
+	
 
 	// This is ajax preview for blog grid layouy
 	// ######
@@ -483,6 +483,7 @@ if ($max_num_pages != 1) {
 				'current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
 				'max_page' => $max_num_pages,
 				'column_layout' => $set_column,
+				'total_post_count' => $total_post_count,
 				'number_of_post' => $blg_post_number
 
 				) 
@@ -647,8 +648,6 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 
 
 
-
-
 // Using Ajax to pass parameters and create load more for blog grid layout
 // ### START
 // #####################
@@ -656,7 +655,22 @@ add_action('save_post', 'save_blog_grid_layouts_meta', 10, 2);
 function blg_loadmore_ajax_handler() {
 
 	// Retrieve data from ajax
+
+	// Column layout for bootstrap grid
 	$col_layout = $_POST['col_layout'];
+	if ($col_layout == 1) {
+		$set_column = 12;
+	} 
+	elseif ($col_layout == 4) {
+		$set_column = 3;
+	}
+	elseif ($col_layout ==3) {
+		$set_column = 4;
+	}
+	elseif ($col_layout = 2) {
+		$set_column = 6;
+	}
+
 	$number_of_post_to_display = $_POST['num_of_post'];
 	$cur_page = $_POST['page'] + 1;
 
@@ -692,7 +706,7 @@ function blg_loadmore_ajax_handler() {
 
 		?>
 
-		<div class="col-<?php echo $col_layout ?>">
+		<div class="col-<?php echo $set_column ?>">
 
 		  <div class="blog_grid_container" style="background-image: url('<?php echo $featured_image; ?> '); "  >
 		  <div class="post_title_grid"> 	<?php echo $post->post_title; ?>  </div>
@@ -712,15 +726,6 @@ add_action('wp_ajax_nopriv_loadmore', 'blg_loadmore_ajax_handler'); // wp_ajax_n
 // Using Ajax to pass parameters and create load more for blog grid layout
 // ### END
 // #####################
-
-
-
-
-
-
-
-
-
 
 
 
@@ -766,20 +771,6 @@ function cptui_register_my_cpts_blog_grid_layouts() {
 
 add_action( 'init', 'cptui_register_my_cpts_blog_grid_layouts' );
 
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // This is ajax preview for blog grid layouy
@@ -824,6 +815,7 @@ function blg_preview_action() {
 			$featured_image = '';
 		}
 
+
 		?>
 
 		<div class="col-<?php echo $col_layout ?>">
@@ -850,10 +842,6 @@ function blg_preview_action() {
 
 
 
-
-
-
-
 // START -- Generate shortcodes for each blog post layout
 // #####
 
@@ -866,51 +854,6 @@ function blg_add_shortcode() {
 
 function blg_shortcode( $attr, $content="") {
 
-
-
-
-
-/*   
-// OLD
-
-	global $wpdb; 
-	//	$post_type = 'post';
-	$my_query = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'blog_grid_layouts' AND post_status IN ('draft', 'publish') ");
-
-
-// 	var_dump($my_query);
-
-	// start loop
-	foreach ( $my_query as $blg_query ) {
-
-
-		
-
-		
-
-		$args = shortcode_atts( array( 
-			'the_post_id' => $blg_id  // pass arguments post_id to shortcodes so that shortcodes can have parameters like id. ex: [cforms ID=12]
-		), $attr );	
-
-		$blg_id_new = $args['the_post_id'];
-
-	
-		$output =  'This is the blg ID post: ' . $args['the_post_id'] . '<br>';
-		
-		return $output;
-		
-
-
-	}
-	// end loop
-
- */
-
-
-
-	
-	// NEW
-
 	// connect to database with post type 'blog_grid_layouts' to get the ID of each post. You can use post_title if you want.
 	global $wpdb; 
 	$post_type = 'blog_grid_layouts';
@@ -920,8 +863,6 @@ function blg_shortcode( $attr, $content="") {
 
 		// Loop start 
 		foreach( $my_query as $blg_query) {		
-
-
 			
 			// var_dump($blg_query);
 
@@ -968,8 +909,6 @@ function blg_shortcode( $attr, $content="") {
 				}	
 			}
 
-
-
 			$post_list = get_posts( array(
 		
 				'numberposts' => $blg_number_posts,
@@ -985,8 +924,6 @@ function blg_shortcode( $attr, $content="") {
 			'<div class="blg_container"> 
 				<div class="row">
 			';
-
-
 		
 			// start loop
 			foreach ( $post_list as $post ) {
@@ -994,6 +931,8 @@ function blg_shortcode( $attr, $content="") {
 				$posts[] += $post->ID;
 				
 				$post_title =  $post->post_title. '<br>';
+
+				$blg_url = get_permalink();
 		
 				$featured_image =  get_the_post_thumbnail_url( $post->ID );
 		
@@ -1007,14 +946,16 @@ function blg_shortcode( $attr, $content="") {
 				'
 				<div class="col-' .  $set_column . ' ">
 
+					<a	href=" ' . $blg_url . ' ">
 						<div class="blog_grid_container" style="background-image: url( ' . $featured_image . ' ); "  >
 							<div class="post_title_grid"> 	' .  $post->post_title . ' </div>
 						</div>
+					</a>
 				
-					</div> 		
+				</div> 		
+
 				';
 
-		
 				
 				} 
 				// end loop
@@ -1024,7 +965,6 @@ function blg_shortcode( $attr, $content="") {
 				$output .= '</div></div>';
 
 				return $output;		
-
 		}
 		// Loop end
 
@@ -1032,31 +972,19 @@ function blg_shortcode( $attr, $content="") {
 
 	else echo "no query here";
 
-
-
-
-
-
 }
-
-
 
 // #####
 // END -- Generate shortcodes for each blog post layout
 
 
 
-
 // ####
 // Start -- Add CSS and JS 
 
-
-
-
 function add_theme_scripts() {
 	wp_enqueue_style( 'style', get_stylesheet_uri() );
-   
-	wp_enqueue_style( 'slider',  plugin_dir_url(__FILE__) . '/css/blg.css', array(), '1.1', 'all');
+	wp_enqueue_style( 'blog_grid_layout',  plugin_dir_url(__FILE__) . '/css/blg.css', array(), '1.1', 'all');
 	wp_enqueue_style( 'bootstrap4',  plugin_dir_url(__FILE__) . '/css/bootstrap.min.css', array(), '1.1', 'all');
    
 //	wp_enqueue_script( 'script', get_template_directory_uri() . '/js/script.js', array ( 'jquery' ), 1.1, true);
