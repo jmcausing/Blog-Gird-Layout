@@ -931,7 +931,7 @@ function blg_shortcode( $attr, $content="") {
 			// start loop
 			foreach ( $post_list as $post ) {
 		
-				$posts[] += $post->ID;
+				$posts[] = $post->ID;
 				
 				$post_title =  $post->post_title. '<br>';
 
